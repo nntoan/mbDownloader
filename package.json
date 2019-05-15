@@ -1,0 +1,50 @@
+{
+  "name": "mbdownloader",
+  "description": "MB (MyBook) Downloader is a small JS framework which contains all functionality to scrapping chapters from story/novel on the Internet and generate the downloaded content into ePub format.",
+  "version": "0.1.6",
+  "license": "MIT",
+  "author": "Toan Nguyen",
+  "main": "src/mbDownloader.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "postclean": "mkdirp dist",
+    "prebuild": "npm run clean",
+    "build": "webpack --config webpack.development.config.js",
+    "postbuild": "webpack --config webpack.production.config.js",
+    "prestart": "npm run clean",
+    "start": "webpack --config webpack.development.config.js --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nntoan/mbDownloader"
+  },
+  "keywords": [
+    "scrapper",
+    "javascript",
+    "browser",
+    "library"
+  ],
+  "bugs": {
+    "url": "https://github.com/nntoan/mbDownloader/issues"
+  },
+  "homepage": "https://github.com/nntoan/mbDownloader#readme",
+  "dependencies": {
+    "jquery": ">=1.8.0",
+    "jquery-ui": "^1.11.0",
+    "jepub": "1.2.5",
+    "file-saver": "2.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/plugin-transform-runtime": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/runtime": "^7.3.4",
+    "babel-loader": "^8.0.5",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "browser-sync": "^2.26.3",
+    "browser-sync-webpack-plugin": "^2.2.2",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  }
+}
