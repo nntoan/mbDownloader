@@ -76,14 +76,6 @@
  *   https://nntoan.mit-license.org
  *
 */
-
-'use strict';
-
-import $ from 'jquery';
-import 'jquery-ui';
-import jEpub from 'jepub';
-import saveAs from 'file-saver';
-
 (function($, undefined) {
     'use strict';
 

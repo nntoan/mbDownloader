@@ -1,7 +1,7 @@
 {
   "name": "mbdownloader",
   "description": "MB (MyBook) Downloader is a small JS framework which contains all functionality to scrapping chapters from story/novel on the Internet and generate the downloaded content into ePub format.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "MIT",
   "author": "Toan Nguyen",
   "main": "src/mbDownloader.js",
@@ -13,7 +13,8 @@
     "postbuild": "webpack --config webpack.production.config.js",
     "prestart": "npm run clean",
     "start": "webpack --config webpack.development.config.js --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "uglify": "uglifyjs src/mbDownloader.js -o dist/mbDownloader.min.js -c -m"
   },
   "repository": {
     "type": "git",
@@ -45,6 +46,7 @@
     "browser-sync": "^2.26.3",
     "browser-sync-webpack-plugin": "^2.2.2",
     "webpack": "^4.29.6",
-    "webpack-cli": "^3.2.3"
+    "webpack-cli": "^3.2.3",
+    "uglifyjs": "^2.4.11"
   }
 }
