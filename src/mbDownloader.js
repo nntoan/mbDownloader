@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.7)
+ * MB (MyBook) Downloader Factory (v0.1.8)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -295,7 +295,7 @@
 
                             $widget.one('click', function (e) {
                                 e.preventDefault();
-                                self.saveEbook();
+                                self.saveEbook($widget);
                             });
 
                             self.getContent($widget);
@@ -498,6 +498,7 @@
             self.jepub.notes(self.processing.beginEnd + self.processing.titleError + '<br /><br />' + options.credits);
 
             self.jepub.generate().then(function (epubZipContent) {
+                self._trigger('processEbook', null, self);
                 self.releaseTheKraken(self, $widget, epubZipContent);
             }).catch(function (error) {
                 self.downloadStatus('error');

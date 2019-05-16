@@ -12,3 +12,9 @@ Initial commit
   - `chapIdUpdated`: Fires when `options.chapters.chapId` updated. (_params: options_)
   - `beforeSave`: Fires before saveAs() executed. (_params: that_)
   - `complete`: Fires after ePub file saved to local. (_params: that_)
+
+## 0.1.8
+
+- Fixed issue when click to download button during the process (`saveEbook()` missing agrs)
+- Added new callback event:
+  - `processEbook`: Fires at the same time with `releaseTheKraken()`. (_params: self_)
