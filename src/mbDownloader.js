@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory
+ * MB (MyBook) Downloader Factory (v0.1.7)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -234,6 +234,20 @@ import saveAs from 'file-saver';
         },
 
         /**
+         * Update chapter ID before get ajax content.
+         *
+         * @param {Object} that     Current widget
+         * @param {Object} options  Widget options
+         * @returns void
+         */
+        updateChapId: function (that, options) {
+            options.chapters.chapId = options.chapters.chapList[that.processing.count];
+            options.xhr.content.url = options.general.pathname + options.chapters.chapId + '/';
+
+            that._trigger('chapIdUpdated', null, options);
+        },
+
+        /**
         * Create new RegExp instance from array.
         *
         * @param {Array} regExp Regular expression array
@@ -317,7 +331,7 @@ import saveAs from 'file-saver';
                 return;
             }
 
-            options.chapters.chapId = options.chapters.chapList[self.processing.count];
+            this.updateChapId(self, options);
 
             $.ajax(options.xhr.content).done(function (response) {
                 var $data = $(response),
@@ -482,7 +496,7 @@ import saveAs from 'file-saver';
             self.processing.endDownload = true;
             $widget.html('Đang nén EPUB...');
 
-            if (options.chapters.chapTitle.length) {
+            if (self.processing.titleError.length) {
                 self.processing.titleError = '<p class="no-indent"><strong>Các chương lỗi: </strong>' + self.processing.titleError.join(', ') + '</p>';
             } else {
                 self.processing.titleError = '';
@@ -522,8 +536,9 @@ import saveAs from 'file-saver';
                 self.downloadStatus('success');
             }
 
+            that._trigger('beforeSave', null, that);
             saveAs(epubZipContent, ebookFilepath); //eslint-disable-line
-            that._trigger('complete');
+            that._trigger('complete', null, that);
         },
 
         /**
