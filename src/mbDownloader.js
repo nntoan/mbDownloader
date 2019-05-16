@@ -516,7 +516,7 @@
         */
         releaseTheKraken: function (that, $widget, epubZipContent) {
             var options = that.options,
-                ebookFilepath = options.processing.ebookFilename + options.processing.ebookFileExt;
+                ebookFilepath = options.processing.ebookFileName + options.processing.ebookFileExt;
 
             document.title = '[⇓] ' + options.ebook.title;
             that.elements.$window.off('beforeunload');

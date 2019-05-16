@@ -18,3 +18,7 @@ Initial commit
 - Fixed issue when click to download button during the process (`saveEbook()` missing agrs)
 - Added new callback event:
   - `processEbook`: Fires at the same time with `releaseTheKraken()`. (_params: self_)
+
+## 0.1.9
+
+- Fixed undefined ebook file name (`options.processing.ebookFileName`)
