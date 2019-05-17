@@ -43,3 +43,8 @@ Initial commit
 
 - Update callback event param:
   - `chapTitleUpdated`: this - current JS object & chapNum - current chapter number
+
+## 0.1.12
+
+- Added ePub cover request options (`options.xhr.cover`) for fetch API.
+- Added new method: `fetchCoverImage()` to use the fetch API and retry with fallback cover image.

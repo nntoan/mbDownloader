@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.11)
+ * MB (MyBook) Downloader Factory (v0.1.12)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -155,6 +155,7 @@
                 author: null,
                 publisher: location.host,
                 description: null,
+                fallbackCover: null,
                 tags: [],
             },
             chapters: {
@@ -175,6 +176,9 @@
                     xhrFields: {
                         withCredentials: true
                     }
+                },
+                cover: {
+                    mode: 'cors'
                 }
             }
         },
@@ -236,6 +240,7 @@
 
             epubInfo = $.extend(epubInfo, options.epubInfo);
             if (epubInfo.hasOwnProperty('cover')) delete epubInfo.cover;
+            if (epubInfo.hasOwnProperty('fallbackCover')) delete epubInfo.fallbackCover;
 
             return epubInfo;
         },
@@ -588,18 +593,31 @@
         finaliseEpub: function (that, $widget) {
             var options = that.options;
 
-            fetch(options.ebook.cover).then(function (response) {
+            that.fetchCoverImage(options.ebook.cover, that);
+            that.generateEpub(that, $widget);
+            that._trigger('complete', null, that);
+        },
+
+        /**
+         * Update cover image via fetch API.
+         *
+         * @param {String} image
+         * @param {Object} that
+         */
+        fetchCoverImage: function (image, that) {
+            var options = that.options;
+
+            fetch(image, options.xhr.cover).then(function (response) {
                 if (response.ok && response.arrayBuffer()) {
                     return response.arrayBuffer();
                 }
             }).then(function (buffer) {
                 that.jepub.cover(buffer);
             }).catch(function (error) {
-                console.log(error); //eslint-disable-line
+                console.error(error); //eslint-disable-line
+                image = options.ebook.fallbackCover;
+                that.fetchCoverImage(image, that);
             });
-
-            that.generateEpub(that, $widget);
-            that._trigger('complete', null, that);
         },
 
         /**
