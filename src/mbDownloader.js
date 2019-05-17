@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.16)
+ * MB (MyBook) Downloader Factory (v0.1.17)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -123,16 +123,16 @@
                 documentTitle: '[...] Vui lòng chờ trong giây lát',
             },
             regularExp: {
-                chapter: ['\s*Chương\s*\d+\s?:.*[^<\n]', 'g'], //eslint-disable-line
-                novel: ['\s*Tiểu\s*thuyết\s?:.*[^<\n]', 'g'], //eslint-disable-line
-                chineseSpecialChars: ['[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]+', 'gm'],
-                alphanumeric: ['\s[a-zA-Z0-9]{6,8}(="")?\s', 'gm'], //eslint-disable-line
-                alphabet: ['[A-Z]'],
-                number: ['\d+'], //eslint-disable-line
-                buttons: ['\([^(]+<button[^/]+<\/button>[^)]*\)\s*', 'gi'], //eslint-disable-line
+                chapter: /\s*Chương\s*\d+\s?:.*[^<\n]/g,
+                novel: /\s*Tiểu\s*thuyết\s?:.*[^<\n]/g,
+                chineseSpecialChars: /[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]+/gm, //eslint-disable-line
+                alphanumeric: /\s[a-zA-Z0-9]{6,8}(="")?\s/gm,
+                alphabet: /[A-Z]/,
+                number: /\d+/,
+                buttons: /\([^(]+<button[^/]+<\/button>[^)]*\)\s*/gi,
                 eoctext: ['(ps:|hoan nghênh quảng đại bạn đọc quang lâm|Huyền ảo khoái trí ân cừu)', 'i'],
-                breakline: ['\n', 'g'],
-                chapList: ['(?:href=")[^")]+(?=")', 'g'],
+                breakline: /\n/g,
+                chapList: /(?:href=")[^")]+(?=")/g,
             },
             classNames: {
                 novelId: null,
@@ -215,10 +215,10 @@
         },
 
         /**
-        * Retrieve/update book information.
-        *
-        * @returns {Object} Qualified ePub information
-        */
+         * Retrieve/update book information.
+         *
+         * @returns {Object} Qualified ePub information
+         */
         getBookInfo: function () {
             var epubInfo = {},
                 options = this.options,
@@ -263,11 +263,11 @@
         },
 
         /**
-        * Create new RegExp instance from array.
-        *
-        * @param {Array} regExp Regular expression array
-        * @returns {RegExp}
-        */
+         * Create new RegExp instance from array.
+         *
+         * @param {Array} regExp Regular expression array
+         * @returns {RegExp}
+         */
         createRegExp: function (regExp) {
             if (!regExp.length) {
                 return;
@@ -277,12 +277,12 @@
         },
 
         /**
-        * Register all event handlers.
-        *
-        * @param {Element} $widget Current widget DOM element
-        * @param {String} event Type of event
-        * @returns void
-        */
+         * Register all event handlers.
+         *
+         * @param {Element} $widget Current widget DOM element
+         * @param {String} event Type of event
+         * @returns void
+         */
         registerEventHandlers: function ($widget, event) {
             var self = this,
                 options = this.options;
@@ -309,7 +309,7 @@
             var options = that.options;
 
             $.ajax(options.xhr.chapter).done(function (response) {
-                options.chapters.chapList = response.match(that.createRegExp(options.regularExp.chapList));
+                options.chapters.chapList = response.match(options.regularExp.chapList);
                 options.chapters.chapList = options.chapters.chapList.map(function (val) {
                     return that.chapListValueFilter(options, val);
                 });
@@ -346,11 +346,11 @@
         },
 
         /**
-        * Get chapter content process.
-        *
-        * @param {Element} $widget Current widget DOM element
-        * @returns void
-        */
+         * Get chapter content process.
+         *
+         * @param {Element} $widget Current widget DOM element
+         * @returns void
+         */
         getContent: function ($widget) {
             var self = this,
                 options = this.options;
@@ -409,7 +409,7 @@
                 chapNum = 0;
 
             if (options.chapters.chapId !== '') {
-                chapNum = options.chapters.chapId.match(that.createRegExp(options.regularExp.number))[0];
+                chapNum = options.chapters.chapId.match(options.regularExp.number)[0];
             }
 
             options.chapters.chapTitle = $result.find(options.classNames.chapterTitle).text().trim();
@@ -471,12 +471,12 @@
         },
 
         /**
-        * Callback function to handle chap list values.
-        *
-        * @param {Object} options
-        * @param {String} val
-        * @returns {String}
-        */
+         * Callback function to handle chap list values.
+         *
+         * @param {Object} options
+         * @param {String} val
+         * @returns {String}
+         */
         chapListValueFilter: function (options, val) {
             val = val.slice(options.chapters.chapListSlice[0], options.chapters.chapListSlice[1]);
             val = val.replace(options.general.referrer, '');
@@ -485,11 +485,11 @@
         },
 
         /**
-        * Update CSS of download button.
-        *
-        * @param {String} status Download status
-        * @returns void
-        */
+         * Update CSS of download button.
+         *
+         * @param {String} status Download status
+         * @returns void
+         */
         downloadStatus: function (status) {
             var self = this,
                 options = this.options;
@@ -498,14 +498,14 @@
         },
 
         /**
-        * Handle error event of downloading process.
-        *
-        * @param {Boolean} error
-        * @param {String} message
-        * @param {Element} $widget
-        * @param {Boolean} retry
-        * @returns {String}
-        */
+         * Handle error event of downloading process.
+         *
+         * @param {Boolean} error
+         * @param {String} message
+         * @param {Element} $widget
+         * @param {Boolean} retry
+         * @returns {String}
+         */
         downloadError: function (error, message, $widget, retry) {
             var options = this.options;
 
@@ -533,37 +533,37 @@
         },
 
         /**
-        * Cleanup redundant charactes in chapter content.
-        *
-        * @param {String} html Chapter content as HTML
-        * @returns {String}
-        */
+         * Cleanup redundant charactes in chapter content.
+         *
+         * @param {String} html Chapter content as HTML
+         * @returns {String}
+         */
         cleanupHtml: function (html) {
             var options = this.options;
 
-            html = html.replace(this.createRegExp(options.regularExp.chapter), '');
-            html = html.replace(this.createRegExp(options.regularExp.novel), '');
-            html = html.replace(this.createRegExp(options.regularExp.chineseSpecialChars), ''); // eslint-disable-line
-            html = html.replace(this.createRegExp(options.regularExp.alphanumeric), function (key, attr) {
+            html = html.replace(options.regularExp.chapter, '');
+            html = html.replace(options.regularExp.novel, '');
+            html = html.replace(options.regularExp.chineseSpecialChars, '');
+            html = html.replace(options.regularExp.alphanumeric, function (key, attr) {
                 if (attr) return ' ';
                 if (!isNaN(key)) return key;
-                if (key.split(this.createRegExp(options.regularExp.alphabet)).length > 2) return ' ';
-                if (key.split(this.createRegExp(options.regularExp.number)).length > 1) return ' ';
+                if (key.split(options.regularExp.alphabet).length > 2) return ' ';
+                if (key.split(options.regularExp.number).length > 1) return ' ';
                 return key;
             });
-            html = html.replace(this.createRegExp(options.regularExp.buttons), '');
+            html = html.replace(options.regularExp.buttons, '');
             html = html.split(this.createRegExp(options.regularExp.eoctext))[0];
-            html = html.replace(this.createRegExp(options.regularExp.breakline), '<br />');
+            html = html.replace(options.regularExp.breakline, '<br />');
 
             return '<div>' + html + '</div>';
         },
 
         /**
-        * Save ebook process.
-        *
-        * @param {Element} $widget Current DOM element
-        * @returns void
-        */
+         * Save ebook process.
+         *
+         * @param {Element} $widget Current DOM element
+         * @returns void
+         */
         saveEbook: function ($widget) {
             var self = this,
                 options = this.options;
@@ -626,12 +626,12 @@
         },
 
         /**
-        * Create BLOB and save file to browser.
-        *
-        * @param {Object} that
-        * @param {Element} $widget
-        * @returns void
-        */
+         * Create BLOB and save file to browser.
+         *
+         * @param {Object} that
+         * @param {Element} $widget
+         * @returns void
+         */
         generateEpub: function (that, $widget) {
             var options = that.options,
                 ebookFilepath = options.processing.ebookFileName + options.processing.ebookFileExt;

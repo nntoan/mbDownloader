@@ -70,3 +70,7 @@ Initial commit
 ## 0.1.16
 
 - Fixed issue with the condition (typo: `options.chapter`) in `updateChapterTitle()`.
+
+## 0.1.17
+
+- Fixed multiple issues with RegExp
