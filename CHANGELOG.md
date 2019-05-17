@@ -66,3 +66,7 @@ Initial commit
 ## 0.1.15
 
 - Fixed issue with `chapNum` in `chapTitleUpdated` event.
+
+## 0.1.16
+
+- Fixed issue with the condition (typo: `options.chapter`) in `updateChapterTitle()`.
