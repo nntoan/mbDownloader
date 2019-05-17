@@ -78,3 +78,7 @@ Initial commit
 ## 0.1.18
 
 - Fixed ePub missing book information
+
+## 0.1.19
+
+- Fixed download wrapper initial and workflow

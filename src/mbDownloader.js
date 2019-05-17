@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.18)
+ * MB (MyBook) Downloader Factory (v0.1.19)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -101,7 +101,7 @@
                 href: 'javascript:;',
                 text: 'Tải xuống'
             }),
-            $downloadWrapper: null,
+            $downloadWrapper: $('<div>'),
             $novelId: null,
             $infoBlock: null,
         },
@@ -205,7 +205,7 @@
 
             // Works with download button
             if (this.createDownloadWrapper === true) {
-                this.elements.$downloadWrapper = $(this.options.classNames.downloadWrapper);
+                this.elements.$downloadWrapper.addClass(this.options.classNames.downloadWrapper);
                 this.elements.$downloadWrapper.append(this.options.classNames.downloadAppendTo);
                 this.elements.$downloadBtn.appendTo(this.options.classNames.downloadWrapper);
             } else {
