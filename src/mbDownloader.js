@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.8)
+ * MB (MyBook) Downloader Factory (v0.1.10)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -9,8 +9,10 @@
  * Depends:
  *   - jQuery 1.8+                     (http://api.jquery.com/)
  *   - jQuery UI 1.11 widget factory   (http://api.jqueryui.com/jQuery.widget/)
- *   - jEpub 1.2.5                     (https://github.com/lelinhtinh/jEpub/)
- *   - FileSaver 2.0.1                 (https://github.com/eligrey/FileSaver.js/)
+ *   - jsZip 3.2+                      (https://github.com/Stuk/jszip)
+ *   - EJs 2.6+                        (https://github.com/mde/ejs)
+ *   - jEpub 2.1+                      (https://github.com/lelinhtinh/jEpub/)
+ *   - FileSaver 2.0+                  (https://github.com/eligrey/FileSaver.js/)
  *
  * Widget Options:
  *   - errorAlert                      Show alert dialog if errors found
@@ -81,6 +83,7 @@
 
     $.widget('nntoan.mbDownloader', {
         jepub: null,
+        fileSaver: null,
         processing: {
             count: 0,
             begin: '',
@@ -89,6 +92,7 @@
             beginEnd: '',
             titleError: [],
             chapListSize: 0,
+            retryDownload: 0,
         },
         elements: {
             $window: $(window),
@@ -103,6 +107,7 @@
         },
         options: {
             errorAlert: true,
+            readyToInit: false,
             createDownloadWrapper: false,
             insertMode: 'appendTo',
             credits: '<p>UserScript được viết bởi: <a href="https://nntoan.com/">Toan Nguyen</a></p>',
@@ -135,6 +140,7 @@
                 chapterContent: null,
                 chapterNotContent: null,
                 chapterVip: '#btnChapterVip',
+                chapterTitle: null,
                 ebookTitle: null,
                 ebookAuthor: null,
                 ebookCover: null,
@@ -187,8 +193,11 @@
             this.options.xhr.content.url = this.options.general.pathname + this.options.chapters.chapId + '/';
 
             // Prepare & register jEpub instance
-            this.getBookInfo();
-            this.jepub = new jEpub(this.options.ebook).uuid(this.generateUUID()); //eslint-disable-line
+            var epubInfo = this.getBookInfo();
+            if (this.options.readyToInit === true) {
+                this.jepub = new jEpub(); //eslint-disable-line
+                this.jepub.init(epubInfo).uuid(this.options.general.referrer);
+            }
 
             // Works with download button
             if (this.createDownloadWrapper === true) {
@@ -204,10 +213,11 @@
         /**
         * Retrieve/update book information.
         *
-        * @returns void
+        * @returns {Object} Qualified ePub information
         */
         getBookInfo: function () {
-            var options = this.options,
+            var epubInfo = {},
+                options = this.options,
                 $infoBlock = this.elements.$infoBlock;
 
             options.ebook = $.extend(options.ebook, {
@@ -223,20 +233,28 @@
                     options.ebook.tags.push($(this).text().trim());
                 });
             }
+
+            epubInfo = $.extend(epubInfo, options.epubInfo);
+            if (epubInfo.hasOwnProperty('cover')) delete epubInfo.cover;
+
+            return epubInfo;
         },
 
         /**
          * Update chapter ID before get ajax content.
          *
-         * @param {Object} that     Current widget
-         * @param {Object} options  Widget options
+         * Events: chapIdUpdated - params: {this}
+         *
+         * @param {Object} that Current JS object
          * @returns void
          */
-        updateChapId: function (that, options) {
+        updateChapId: function (that) {
+            var options = that.options;
+
             options.chapters.chapId = options.chapters.chapList[that.processing.count];
             options.xhr.content.url = options.general.pathname + options.chapters.chapId + '/';
 
-            that._trigger('chapIdUpdated', null, options);
+            that._trigger('chapIdUpdated', null, that);
         },
 
         /**
@@ -269,44 +287,57 @@
                     e.preventDefault();
 
                     document.title = options.processing.documentTitle;
-
-                    $.ajax(options.xhr.chapter).done(function (response) {
-                        options.chapters.chapList = response.match(self.createRegExp(options.regularExp.chapList));
-                        options.chapters.chapList = options.chapters.chapList.map(function (val) {
-                            return self.chapListValueFilter(options, val);
-                        });
-
-                        if (e.type === 'contextmenu') {
-                            $widget.off('click');
-                            var startFrom = prompt('Nhập ID chương truyện bắt đầu tải:', options.chapters.chapList[0]);
-                            startFrom = options.chapters.chapList.indexOf(startFrom);
-                            if (startFrom !== -1) {
-                                options.chapters.chapList = options.chapters.chapList.slice(startFrom);
-                            }
-                        } else {
-                            $widget.off('contextmenu');
-                        }
-
-                        self.processing.chapListSize = options.chapters.chapList.length;
-                        if (self.processing.chapListSize > 0) {
-                            self.elements.$window.on('beforeunload', function () {
-                                return 'Truyện đang được tải xuống...';
-                            });
-
-                            $widget.one('click', function (e) {
-                                e.preventDefault();
-                                self.saveEbook($widget);
-                            });
-
-                            self.getContent($widget);
-                        }
-                    }).fail(function (error) {
-                        $widget.text('Lỗi danh mục');
-                        self.downloadStatus('error');
-                        console.error(error); //eslint-disable-line
-                    });
+                    self.getListOfChapters(self, e, $widget);
                 });
             }
+        },
+
+        /**
+         * Get list of chapters request.
+         *
+         * @param {Object} that     Curent widget object
+         * @param {Event} event     jQuery event
+         * @param {Element} $widget Current node element
+         * @returns void
+         */
+        getListOfChapters: function (that, event, $widget) {
+            var options = that.options;
+
+            $.ajax(options.xhr.chapter).done(function (response) {
+                options.chapters.chapList = response.match(that.createRegExp(options.regularExp.chapList));
+                options.chapters.chapList = options.chapters.chapList.map(function (val) {
+                    return that.chapListValueFilter(options, val);
+                });
+
+                if (event.type === 'contextmenu') {
+                    $widget.off('click');
+                    var startFrom = prompt('Nhập ID chương truyện bắt đầu tải:', options.chapters.chapList[0]);
+                    startFrom = options.chapters.chapList.indexOf(startFrom);
+                    if (startFrom !== -1) {
+                        options.chapters.chapList = options.chapters.chapList.slice(startFrom);
+                    }
+                } else {
+                    $widget.off('contextmenu');
+                }
+
+                that.processing.chapListSize = options.chapters.chapList.length;
+                if (that.processing.chapListSize > 0) {
+                    that.elements.$window.on('beforeunload', function () {
+                        return 'Truyện đang được tải xuống...';
+                    });
+
+                    $widget.one('click', function (e) {
+                        e.preventDefault();
+                        that.saveEbook($widget);
+                    });
+
+                    that.getContent($widget);
+                }
+            }).fail(function (error) {
+                $widget.text('Lỗi danh mục');
+                that.downloadStatus('error');
+                console.error(error); //eslint-disable-line
+            });
         },
 
         /**
@@ -323,56 +354,19 @@
                 return;
             }
 
-            this.updateChapId(self, options);
+            this.updateChapId(self);
 
             $.ajax(options.xhr.content).done(function (response) {
                 var $data = $(response),
                     $chapter = $data.find(options.classNames.chapterContent),
-                    $notContent = $chapter.find(options.classNames.chapterNotContent),
-                    $referrer = $chapter.find('[style]').filter(function () {
-                        return (this.style.fontSize === '1px' || this.style.fontSize === '0px' || this.style.color === 'white');
-                    }),
                     chapContent;
 
                 if (self.processing.endDownload === true) {
                     return;
                 }
 
-                options.chapters.chapTitle = $data.find('h2').text().trim();
-                if (options.chapters.chapTitle === '') {
-                    options.chapters.chapTitle = 'Chương ' + options.chapters.chapId.match(self.createRegExp(options.regularExp.number))[0];
-                }
-
-                if (!$chapter.length) {
-                    chapContent = self.downloadError('Không có nội dung');
-                } else {
-                    if ($chapter.find(options.classNames.chapterVip).length) {
-                        chapContent = self.downloadError('Chương VIP');
-                    } else if ($chapter.filter(function () {
-                        return (this.textContent.toLowerCase().indexOf('vui lòng đăng nhập để đọc chương này') !== -1);
-                    }).length) {
-                        chapContent = self.downloadError('Chương yêu cầu đăng nhập');
-                    } else {
-                        var $img = $chapter.find('img');
-                        if ($img.length) {
-                            $img.replaceWith(function () {
-                                return '<br /><a href="' + this.src + '">Click để xem ảnh</a><br />';
-                            });
-                        }
-
-                        if ($notContent.length) $notContent.remove();
-                        if ($referrer.length) $referrer.remove();
-
-                        if ($chapter.text().trim() === '') {
-                            chapContent = self.downloadError('Nội dung không có');
-                        } else {
-                            if (!$widget.hasClass('error')) {
-                                self.downloadStatus('warning');
-                            }
-                            chapContent = self.parseHtml($chapter.html());
-                        }
-                    }
-                }
+                self.updateChapterTitle(self, $data);
+                chapContent = self.parseChapterContent(self, $chapter, $widget);
 
                 self.jepub.add(options.chapters.chapTitle, chapContent);
 
@@ -392,16 +386,86 @@
                 }
             }).fail(function (error) {
                 self.downloadError('Kết nối không ổn định', error);
-                self.saveEbook($widget);
+                if (self.processing.retryDownload === 0) {
+                    self.saveEbook($widget);
+                }
             });
+        },
+
+        /**
+         * Update chapter title.
+         *
+         * @param {Object} that     Current JS object
+         * @param {Element} $result jQuery node for ajax response
+         * @returns void
+         */
+        updateChapterTitle: function (that, $result) {
+            var options = that.options;
+
+            options.chapters.chapTitle = $result.find(options.classNames.chapterTitle).text().trim();
+            if (options.chapters.chapTitle === '') {
+                options.chapters.chapTitle = 'Chương ' + options.chapters.chapId.match(that.createRegExp(options.regularExp.number))[0];
+            }
+
+            that._trigger('chapTitleUpdated', null, that);
+        },
+
+        /**
+         * Parse the chapter content.
+         *
+         * @param {Object} that         Current JS object
+         * @param {Element} $chapter    Element node of chapter content
+         * @param {Element} $widget     Element node of download button
+         * @returns {String}
+         */
+        parseChapterContent: function (that, $chapter, $widget) {
+            var options = that.options,
+                $notContent = $chapter.find(options.classNames.chapterNotContent),
+                $referrer = $chapter.find('[style]').filter(function () {
+                    return (this.style.fontSize === '1px' || this.style.fontSize === '0px' || this.style.color === 'white');
+                }),
+                chapContent;
+
+            if (!$chapter.length) {
+                chapContent = that.downloadError('Không có nội dung');
+            } else {
+                if ($chapter.find(options.classNames.chapterVip).length) {
+                    chapContent = that.downloadError('Chương VIP');
+                } else if ($chapter.filter(function () {
+                    return (this.textContent.toLowerCase().indexOf('vui lòng đăng nhập để đọc chương này') !== -1);
+                }).length) {
+                    chapContent = that.downloadError('Chương yêu cầu đăng nhập');
+                } else {
+                    var $img = $chapter.find('img');
+                    if ($img.length) {
+                        $img.replaceWith(function () {
+                            return '<br /><a href="' + this.src + '">Click để xem ảnh</a><br />';
+                        });
+                    }
+
+                    if ($notContent.length) $notContent.remove();
+                    if ($referrer.length) $referrer.remove();
+
+                    if ($chapter.text().trim() === '') {
+                        chapContent = that.downloadError('Nội dung không có');
+                    } else {
+                        if (!$widget.hasClass('error')) {
+                            that.downloadStatus('warning');
+                        }
+                        chapContent = that.cleanupHtml($chapter.html());
+                    }
+                }
+            }
+
+            return chapContent;
         },
 
         /**
         * Callback function to handle chap list values.
         *
-        * @param {object} options
-        * @param {string} val
-        * @returns {string}
+        * @param {Object} options
+        * @param {String} val
+        * @returns {String}
         */
         chapListValueFilter: function (options, val) {
             val = val.slice(options.chapters.chapListSlice[0], options.chapters.chapListSlice[1]);
@@ -413,7 +477,7 @@
         /**
         * Update CSS of download button.
         *
-        * @param {string} status Download status
+        * @param {String} status Download status
         * @returns void
         */
         downloadStatus: function (status) {
@@ -426,33 +490,45 @@
         /**
         * Handle error event of downloading process.
         *
-        * @param {boolean} error
-        * @param {string} message
-        * @returns {string}
+        * @param {Boolean} error
+        * @param {String} message
+        * @param {Element} $widget
+        * @param {Boolean} retry
+        * @returns {String}
         */
-        downloadError: function (error, message) {
+        downloadError: function (error, message, $widget = null, retry = false) {
             var options = this.options;
 
             this.downloadStatus('error');
-            this.processing.titleError.push(options.chapters.chapTitle);
-            if (options.errorAlert) {
-                options.errorAlert = confirm('Lỗi! ' + message + '\nBạn có muốn tiếp tục nhận cảnh báo?');
-            }
+            if (options.errorAlert) options.errorAlert = confirm('Lỗi! ' + message + '\nBạn có muốn tiếp tục nhận cảnh báo?');
+            if (error) console.error(message); //eslint-disable-line
 
-            if (error) {
-                console.error(message); //eslint-disable-line
+            if (retry === true) {
+                if (this.processing.retryDownload > 700) {
+                    this.processing.titleError.push(options.chapters.chapTitle);
+                    this.saveEbook($widget);
+                    return;
+                }
+
+                this.downloadStatus('warning');
+                this.processing.retryDownload += 100;
+                setTimeout(function () {
+                    this.getContent($widget);
+                }, this.processing.retryDownload);
+                return;
             }
+            this.processing.titleError.push(options.chapters.chapTitle);
 
             return '<p class="no-indent"><a href="' + options.general.referrer + options.chapters.chapId + '">' + message + '</a></p>';
         },
 
         /**
-        * Parse chapter content and wrap a <div> tag for ePub.
+        * Cleanup redundant charactes in chapter content.
         *
-        * @param {string} html Chapter content as HTML
-        * @returns {string}
+        * @param {String} html Chapter content as HTML
+        * @returns {String}
         */
-        parseHtml: function (html) {
+        cleanupHtml: function (html) {
             var options = this.options;
 
             html = html.replace(this.createRegExp(options.regularExp.chapter), '');
@@ -468,6 +544,7 @@
             html = html.replace(this.createRegExp(options.regularExp.buttons), '');
             html = html.split(this.createRegExp(options.regularExp.eoctext))[0];
             html = html.replace(this.createRegExp(options.regularExp.breakline), '<br />');
+
             return '<div>' + html + '</div>';
         },
 
@@ -497,13 +574,27 @@
 
             self.jepub.notes(self.processing.beginEnd + self.processing.titleError + '<br /><br />' + options.credits);
 
-            self.jepub.generate().then(function (epubZipContent) {
-                self._trigger('processEbook', null, self);
-                self.releaseTheKraken(self, $widget, epubZipContent);
-            }).catch(function (error) {
-                self.downloadStatus('error');
-                console.error(error); //eslint-disable-line
+            self.finaliseEpub(self, $widget);
+        },
+
+        /**
+         * Start finalising ePub file process.
+         *
+         * @param {Object} that      Current JS object
+         * @param {Element} $widget  Current DOM element
+         * @returns void
+         */
+        finaliseEpub: function (that, $widget) {
+            var options = that.options;
+
+            fetch(options.ebook.cover).then(response => response.ok && response.arrayBuffer()).then(buffer => {
+                that.jepub.cover(buffer);
+            }).catch(error => {
+                console.log(error); //eslint-disable-line
             });
+
+            that.generateEpub(that, $widget);
+            that._trigger('complete', null, that);
         },
 
         /**
@@ -511,45 +602,31 @@
         *
         * @param {Object} that
         * @param {Element} $widget
-        * @param {Blob} epubZipContent
         * @returns void
         */
-        releaseTheKraken: function (that, $widget, epubZipContent) {
+        generateEpub: function (that, $widget) {
             var options = that.options,
                 ebookFilepath = options.processing.ebookFileName + options.processing.ebookFileExt;
 
-            document.title = '[⇓] ' + options.ebook.title;
-            that.elements.$window.off('beforeunload');
+            that._trigger('beforeCreateEpub', null, that);
+            that.jepub.generate().then(epubZipContent => {
+                document.title = '[⇓] ' + options.ebook.title;
+                that.elements.$window.off('beforeunload');
 
-            $widget.attr({
-                href: window.URL.createObjectURL(epubZipContent),
-                download: ebookFilepath
-            }).text('✓ Hoàn thành').off('click');
-            if (!$widget.hasClass('error')) {
-                self.downloadStatus('success');
-            }
+                $widget.attr({
+                    href: window.URL.createObjectURL(epubZipContent),
+                    download: ebookFilepath
+                }).text('✓ Hoàn thành').off('click');
+                if (!$widget.hasClass('error')) {
+                    that.downloadStatus('success');
+                }
 
-            that._trigger('beforeSave', null, that);
-            saveAs(epubZipContent, ebookFilepath); //eslint-disable-line
-            that._trigger('complete', null, that);
-        },
-
-        /**
-        * Generate UUID.
-        *
-        * @returns {string} Universally Unique Identifier
-        */
-        generateUUID : function () {
-            // Universally Unique Identifier
-            var d = new Date().getTime();
-            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                var r = (d + Math.random() * 16) % 16 | 0;
-                d = Math.floor(d / 16);
-                return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+                saveAs(epubZipContent, ebookFilepath); //eslint-disable-line
+            }).catch(error => {
+                that.downloadStatus('error');
+                console.error(error); //eslint-disable-line
             });
-
-            return uuid;
-        },
+        }
     });
 // eslint-disable-next-line no-undef
 })(jQuery);
