@@ -48,3 +48,11 @@ Initial commit
 
 - Added ePub cover request options (`options.xhr.cover`) for fetch API.
 - Added new method: `fetchCoverImage()` to use the fetch API and retry with fallback cover image.
+
+## 0.1.13
+
+- Fixed issue with `response.arrayBuffer()` promises.
+- Fixed issue with params for event `chapTitleUpdated`:
+  - `chapTitleUpdate: function (event, data) { that = data.this; chapNum = data.chapNum; }`
+- Added new event for fetch API:
+  - `fetchCoverImage: function (event, data) { that = data.this; buffer = data.buffer; }`

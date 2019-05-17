@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.12)
+ * MB (MyBook) Downloader Factory (v0.1.13)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -413,7 +413,7 @@
                 options.chapters.chapTitle = 'Chương ' + chapNum;
             }
 
-            that._trigger('chapTitleUpdated', null, [that, chapNum]);
+            that._trigger('chapTitleUpdated', null, {this: that, chapNum: chapNum});
         },
 
         /**
@@ -609,10 +609,11 @@
 
             fetch(image, options.xhr.cover).then(function (response) {
                 if (response.ok && response.arrayBuffer()) {
-                    return response.arrayBuffer();
+                    response.arrayBuffer().then(function (buffer) {
+                        that.jepub.cover(buffer);
+                        that._trigger('fetchCoverImage', null, {this: that, buffer: buffer});
+                    });
                 }
-            }).then(function (buffer) {
-                that.jepub.cover(buffer);
             }).catch(function (error) {
                 console.error(error); //eslint-disable-line
                 image = options.ebook.fallbackCover;
