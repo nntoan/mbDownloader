@@ -496,7 +496,7 @@
         * @param {Boolean} retry
         * @returns {String}
         */
-        downloadError: function (error, message, $widget = null, retry = false) {
+        downloadError: function (error, message, $widget, retry) {
             var options = this.options;
 
             this.downloadStatus('error');
@@ -587,9 +587,13 @@
         finaliseEpub: function (that, $widget) {
             var options = that.options;
 
-            fetch(options.ebook.cover).then(response => response.ok && response.arrayBuffer()).then(buffer => {
+            fetch(options.ebook.cover).then(function (response) {
+                if (response.ok && response.arrayBuffer()) {
+                    return response.arrayBuffer();
+                }
+            }).then(function (buffer) {
                 that.jepub.cover(buffer);
-            }).catch(error => {
+            }).catch(function (error) {
                 console.log(error); //eslint-disable-line
             });
 
@@ -609,7 +613,7 @@
                 ebookFilepath = options.processing.ebookFileName + options.processing.ebookFileExt;
 
             that._trigger('beforeCreateEpub', null, that);
-            that.jepub.generate().then(epubZipContent => {
+            that.jepub.generate().then(function (epubZipContent) {
                 document.title = '[⇓] ' + options.ebook.title;
                 that.elements.$window.off('beforeunload');
 
@@ -622,7 +626,7 @@
                 }
 
                 saveAs(epubZipContent, ebookFilepath); //eslint-disable-line
-            }).catch(error => {
+            }).catch(function (error) {
                 that.downloadStatus('error');
                 console.error(error); //eslint-disable-line
             });
