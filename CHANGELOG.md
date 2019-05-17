@@ -38,3 +38,8 @@ Initial commit
   - `beforeSave` -> `beforeCreateEpub` (executed before `this.jepub.generate()` runs).
 - Added new callback events:
   - `chapTitleUpdated`: Fires when `options.chapters.chapId` updated. (_params: this_)
+
+## 0.1.11
+
+- Update callback event param:
+  - `chapTitleUpdated`: this - current JS object & chapNum - current chapter number
