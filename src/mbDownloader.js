@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.14)
+ * MB (MyBook) Downloader Factory (v0.1.15)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -406,7 +406,11 @@
          */
         updateChapterTitle: function (that, $result) {
             var options = that.options,
+                chapNum = 0;
+
+            if (options.chapter.chapId !== '') {
                 chapNum = options.chapters.chapId.match(that.createRegExp(options.regularExp.number))[0];
+            }
 
             options.chapters.chapTitle = $result.find(options.classNames.chapterTitle).text().trim();
             if (options.chapters.chapTitle === '') {

@@ -1,7 +1,7 @@
 {
   "name": "mbdownloader",
   "description": "MB (MyBook) Downloader is a small JS framework which contains all functionality to scrapping chapters from story/novel on the Internet and generate the downloaded content into ePub format.",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "license": "MIT",
   "author": "Toan Nguyen",
   "main": "src/mbDownloader.js",

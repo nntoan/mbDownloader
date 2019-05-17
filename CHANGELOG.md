@@ -62,3 +62,7 @@ Initial commit
 - Changed response type from `arrayBuffer` to `blob`.
 - Fixed issue with the resolve promises inside `fetch()`.
 - Fixed issue with `chapNum` in `chapTitleUpdated` event.
+
+## 0.1.15
+
+- Fixed issue with `chapNum` in `chapTitleUpdated` event.
