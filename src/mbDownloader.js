@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.17)
+ * MB (MyBook) Downloader Factory (v0.1.18)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -238,7 +238,7 @@
                 });
             }
 
-            epubInfo = $.extend(epubInfo, options.epubInfo);
+            epubInfo = $.extend(epubInfo, options.ebook);
             if (epubInfo.hasOwnProperty('cover')) delete epubInfo.cover;
             if (epubInfo.hasOwnProperty('fallbackCover')) delete epubInfo.fallbackCover;
 

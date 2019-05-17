@@ -74,3 +74,7 @@ Initial commit
 ## 0.1.17
 
 - Fixed multiple issues with RegExp
+
+## 0.1.18
+
+- Fixed ePub missing book information
