@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.13)
+ * MB (MyBook) Downloader Factory (v0.1.14)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -405,11 +405,11 @@
          * @returns void
          */
         updateChapterTitle: function (that, $result) {
-            var options = that.options, chapNum;
+            var options = that.options,
+                chapNum = options.chapters.chapId.match(that.createRegExp(options.regularExp.number))[0];
 
             options.chapters.chapTitle = $result.find(options.classNames.chapterTitle).text().trim();
             if (options.chapters.chapTitle === '') {
-                chapNum = options.chapters.chapId.match(that.createRegExp(options.regularExp.number))[0];
                 options.chapters.chapTitle = 'Chương ' + chapNum;
             }
 
@@ -601,23 +601,23 @@
         /**
          * Update cover image via fetch API.
          *
-         * @param {String} image
+         * @param {String} coverImg
          * @param {Object} that
          */
-        fetchCoverImage: function (image, that) {
+        fetchCoverImage: function (coverImg, that) {
             var options = that.options;
 
-            fetch(image, options.xhr.cover).then(function (response) {
-                if (response.ok && response.arrayBuffer()) {
-                    response.arrayBuffer().then(function (buffer) {
-                        that.jepub.cover(buffer);
-                        that._trigger('fetchCoverImage', null, {this: that, buffer: buffer});
+            fetch(coverImg, options.xhr.cover).then(function (response) {
+                if (response.ok) {
+                    response.blob().then(function (image) {
+                        that.jepub.cover(image);
+                        that._trigger('fetchCoverImage', null, {this: that, image: image});
                     });
                 }
             }).catch(function (error) {
                 console.error(error); //eslint-disable-line
-                image = options.ebook.fallbackCover;
-                that.fetchCoverImage(image, that);
+                coverImg = options.ebook.fallbackCover;
+                that.fetchCoverImage(coverImg, that);
             });
         },
 

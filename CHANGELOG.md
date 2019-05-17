@@ -56,3 +56,9 @@ Initial commit
   - `chapTitleUpdate: function (event, data) { that = data.this; chapNum = data.chapNum; }`
 - Added new event for fetch API:
   - `fetchCoverImage: function (event, data) { that = data.this; buffer = data.buffer; }`
+
+## 0.1.14
+
+- Changed response type from `arrayBuffer` to `blob`.
+- Fixed issue with the resolve promises inside `fetch()`.
+- Fixed issue with `chapNum` in `chapTitleUpdated` event.
