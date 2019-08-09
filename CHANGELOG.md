@@ -100,3 +100,7 @@ Initial commit
 - Chapter list now support to drop empty values in the array
 - Added new event which fires after `options.chapters.chapList` mutated
   - `chapListFiltered: function (event, chapList) { chapList.splice(x); }`
+
+## 0.2.3
+
+- Fixed an issue with `updateChapterTitle` API
