@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.1.19)
+ * MB (MyBook) Downloader Factory (v0.2.0)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -58,6 +58,8 @@
  *      - author                       ePub author
  *      - publisher                    ePub publisher
  *      - description                  ePub description
+ *      - fallbackCover                ePub cover image to fallback (full image URL)
+ *      - corsAnywhere                 ePub CORS anywhere service (set to blank if don't need to bypass CORS)
  *      - tags                         ePub tags (array)
  *   * chapters
  *      - chapList                     All chapters pathname of the book will be stored here
@@ -73,6 +75,8 @@
  *        - type
  *        - url
  *        - xhrFields
+  *      - cover                      This is the $.ajax() options to get book cover img
+ *        - mode
  *
  * Licensed under the MIT license:
  *   https://nntoan.mit-license.org
@@ -156,6 +160,7 @@
                 publisher: location.host,
                 description: null,
                 fallbackCover: null,
+                corsAnywhere: 'https://cors-anywhere.herokuapp.com/',
                 tags: [],
             },
             chapters: {
@@ -241,6 +246,12 @@
             epubInfo = $.extend(epubInfo, options.ebook);
             if (epubInfo.hasOwnProperty('cover')) delete epubInfo.cover;
             if (epubInfo.hasOwnProperty('fallbackCover')) delete epubInfo.fallbackCover;
+            if (epubInfo.hasOwnProperty('corsAnywhere')) delete epubInfo.corsAnywhere;
+
+            this._trigger('bookInfoUpdated', null, {
+                that: this,
+                epubInfo: epubInfo
+            });
 
             return epubInfo;
         },
@@ -478,7 +489,11 @@
          * @returns {String}
          */
         chapListValueFilter: function (options, val) {
-            val = val.slice(options.chapters.chapListSlice[0], options.chapters.chapListSlice[1]);
+            if (typeof options.chapters.chapListSlice[1] !== 'undefined') {
+                val = val.slice(options.chapters.chapListSlice[0], options.chapters.chapListSlice[1]);
+            } else {
+                val = val.slice(options.chapters.chapListSlice[0]);
+            }
             val = val.replace(options.general.referrer, '');
 
             return val.trim();
@@ -597,7 +612,7 @@
         finaliseEpub: function (that, $widget) {
             var options = that.options;
 
-            that.fetchCoverImage(options.ebook.cover, that);
+            that.fetchCoverImage(options.ebook.corsAnywhere + options.ebook.cover, that);
             that.generateEpub(that, $widget);
             that._trigger('complete', null, that);
         },
@@ -613,11 +628,11 @@
 
             fetch(coverImg, options.xhr.cover).then(function (response) {
                 if (response.ok) {
-                    response.blob().then(function (image) {
-                        that.jepub.cover(image);
-                        that._trigger('fetchCoverImage', null, {this: that, image: image});
-                    });
+                    return response.arrayBuffer();
                 }
+            }).then(function (response) {
+                that.jepub.cover(response);
+                that._trigger('fetchCoverImage', null, { this: that, image: response });
             }).catch(function (error) {
                 console.error(error); //eslint-disable-line
                 coverImg = options.ebook.fallbackCover;

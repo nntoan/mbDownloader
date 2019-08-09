@@ -82,3 +82,11 @@ Initial commit
 ## 0.1.19
 
 - Fixed download wrapper initial and workflow
+
+## 0.2.0
+
+- Fixed issue with fetch CORS image buffer
+- Fixed issue with `chapListValueFilter` API when `.slice()` does not require endIndex
+- Optimise `fetchCoverImage()` performance to resolve promise
+- Added new event which fires after epubInfo (`getBookInfo`) updated:
+  - `bookInfoUpdated: function (event, data) { that = data.that; epubInfo = data.epubInfo; }`
