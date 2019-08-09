@@ -94,3 +94,9 @@ Initial commit
 ## 0.2.1
 
 - Move the ePub properties cleanup (after event `bookInfoUpdated` runs)
+
+## 0.2.2
+
+- Chapter list now support to drop empty values in the array
+- Added new event which fires after `options.chapters.chapList` mutated
+  - `chapListFiltered: function (event, chapList) { chapList.splice(x); }`

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.2.1)
+ * MB (MyBook) Downloader Factory (v0.2.2)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -323,8 +323,11 @@
                 options.chapters.chapList = response.match(options.regularExp.chapList);
                 options.chapters.chapList = options.chapters.chapList.map(function (val) {
                     return that.chapListValueFilter(options, val);
+                }).filter(function (chapter) {
+                    return chapter !== '';
                 });
 
+                that._trigger('chapListFiltered', null, options.chapters.chapList);
                 if (event.type === 'contextmenu') {
                     $widget.off('click');
                     var startFrom = prompt('Nhập ID chương truyện bắt đầu tải:', options.chapters.chapList[0]);
