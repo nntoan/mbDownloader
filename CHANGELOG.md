@@ -90,3 +90,7 @@ Initial commit
 - Optimise `fetchCoverImage()` performance to resolve promise
 - Added new event which fires after epubInfo (`getBookInfo`) updated:
   - `bookInfoUpdated: function (event, data) { that = data.that; epubInfo = data.epubInfo; }`
+
+## 0.2.1
+
+- Move the ePub properties cleanup (after event `bookInfoUpdated` runs)

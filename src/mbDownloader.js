@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.2.0)
+ * MB (MyBook) Downloader Factory (v0.2.1)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -75,7 +75,7 @@
  *        - type
  *        - url
  *        - xhrFields
-  *      - cover                      This is the $.ajax() options to get book cover img
+  *      - cover                       This is the $.ajax() options to get book cover img
  *        - mode
  *
  * Licensed under the MIT license:
@@ -244,14 +244,14 @@
             }
 
             epubInfo = $.extend(epubInfo, options.ebook);
-            if (epubInfo.hasOwnProperty('cover')) delete epubInfo.cover;
-            if (epubInfo.hasOwnProperty('fallbackCover')) delete epubInfo.fallbackCover;
-            if (epubInfo.hasOwnProperty('corsAnywhere')) delete epubInfo.corsAnywhere;
-
             this._trigger('bookInfoUpdated', null, {
                 that: this,
                 epubInfo: epubInfo
             });
+
+            if (epubInfo.hasOwnProperty('cover')) delete epubInfo.cover;
+            if (epubInfo.hasOwnProperty('fallbackCover')) delete epubInfo.fallbackCover;
+            if (epubInfo.hasOwnProperty('corsAnywhere')) delete epubInfo.corsAnywhere;
 
             return epubInfo;
         },
