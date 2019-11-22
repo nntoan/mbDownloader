@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * MB (MyBook) Downloader Factory (v0.2.3)
+ * MB (MyBook) Downloader Factory (v0.2.4)
  *
  * MB Downloader is a jQuery Widget Factory and primarily targeted to be used in userscripts.
  *
@@ -112,6 +112,7 @@
         options: {
             errorAlert: true,
             readyToInit: false,
+            isGlocCallbackRequired: false,
             createDownloadWrapper: false,
             insertMode: 'appendTo',
             credits: '<p>UserScript được viết bởi: <a href="https://nntoan.com/">Toan Nguyen</a></p>',
@@ -317,46 +318,76 @@
          * @returns void
          */
         getListOfChapters: function (that, event, $widget) {
-            var options = that.options;
+            var options = that.options, $ajax = null;
 
-            $.ajax(options.xhr.chapter).done(function (response) {
-                options.chapters.chapList = response.match(options.regularExp.chapList);
-                options.chapters.chapList = options.chapters.chapList.map(function (val) {
-                    return that.chapListValueFilter(options, val);
-                }).filter(function (chapter) {
-                    return chapter !== '';
-                });
+            if (options.isGlocCallbackRequired) {
+                $ajax = that._trigger('getListOfChaptersPreprocess', event, that); //$.when($.ajax(options.xhr.chapter.callback));
+            } else {
+                $ajax = $.ajax(options.xhr.chapter);
+            }
 
-                that._trigger('chapListFiltered', null, options.chapters.chapList);
-                if (event.type === 'contextmenu') {
-                    $widget.off('click');
-                    var startFrom = prompt('Nhập ID chương truyện bắt đầu tải:', options.chapters.chapList[0]);
-                    startFrom = options.chapters.chapList.indexOf(startFrom);
-                    if (startFrom !== -1) {
-                        options.chapters.chapList = options.chapters.chapList.slice(startFrom);
-                    }
+            $ajax.done(function (response) {
+                if (options.isGlocCallbackRequired) {
+                    $.ajax(options.xhr.chapter).done(function(data) {
+                        that.processListOfChapters(data, that, $widget);
+                    }).fail(function (error) {
+                        $widget.text('Lỗi trước khi bị lỗi danh mục :)');
+                        that.downloadStatus('error');
+                        console.error(error); //eslint-disable-line
+                    });
                 } else {
-                    $widget.off('contextmenu');
-                }
-
-                that.processing.chapListSize = options.chapters.chapList.length;
-                if (that.processing.chapListSize > 0) {
-                    that.elements.$window.on('beforeunload', function () {
-                        return 'Truyện đang được tải xuống...';
-                    });
-
-                    $widget.one('click', function (e) {
-                        e.preventDefault();
-                        that.saveEbook($widget);
-                    });
-
-                    that.getContent($widget);
+                    that.processListOfChapters(response, that, $widget);
                 }
             }).fail(function (error) {
                 $widget.text('Lỗi danh mục');
                 that.downloadStatus('error');
                 console.error(error); //eslint-disable-line
             });
+        },
+
+        /**
+         * Process with the XHR response of chapters list.
+         *
+         * @param {jqXHR} response  XHR response
+         * @param {Object} that     Curent widget object
+         * @param {Element} $widget Current node element
+         * @returns void
+         */
+        processListOfChapters: function (response, that, $widget) {
+            var options = that.options;
+
+            options.chapters.chapList = response.match(options.regularExp.chapList);
+            options.chapters.chapList = options.chapters.chapList.map(function (val) {
+                return that.chapListValueFilter(options, val);
+            }).filter(function (chapter) {
+                return chapter !== '';
+            });
+
+            that._trigger('chapListFiltered', null, options.chapters.chapList);
+            if (event.type === 'contextmenu') {
+                $widget.off('click');
+                var startFrom = prompt('Nhập ID chương truyện bắt đầu tải:', options.chapters.chapList[0]);
+                startFrom = options.chapters.chapList.indexOf(startFrom);
+                if (startFrom !== -1) {
+                    options.chapters.chapList = options.chapters.chapList.slice(startFrom);
+                }
+            } else {
+                $widget.off('contextmenu');
+            }
+
+            that.processing.chapListSize = options.chapters.chapList.length;
+            if (that.processing.chapListSize > 0) {
+                that.elements.$window.on('beforeunload', function () {
+                    return 'Truyện đang được tải xuống...';
+                });
+
+                $widget.one('click', function (e) {
+                    e.preventDefault();
+                    that.saveEbook($widget);
+                });
+
+                that.getContent($widget);
+            }
         },
 
         /**

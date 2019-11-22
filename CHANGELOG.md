@@ -104,3 +104,8 @@ Initial commit
 ## 0.2.3
 
 - Fixed an issue with `updateChapterTitle` API
+
+## 0.2.4
+
+- Supports callback to execute actions before call XHR requests to get list of chapters (multiple callback need for some weirdo sites).
+
