@@ -211,9 +211,9 @@
 
             // Works with download button
             if (this.createDownloadWrapper === true) {
-                this.elements.$downloadWrapper.addClass(this.options.classNames.downloadWrapper);
+                this.elements.$downloadWrapper.attr('class', this.options.classNames.downloadWrapper);
+                this.elements.$downloadWrapper.html(this.elements.$downloadBtn);
                 this.elements.$downloadWrapper.append(this.options.classNames.downloadAppendTo);
-                this.elements.$downloadBtn.appendTo(this.options.classNames.downloadWrapper);
             } else {
                 this.elements.$downloadBtn.appendTo(this.options.classNames.downloadAppendTo);
             }
