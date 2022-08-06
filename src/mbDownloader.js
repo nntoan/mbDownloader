@@ -194,7 +194,7 @@
             this.elements.$novelId = $(this.options.classNames.novelId);
             this.elements.$infoBlock = $(this.options.classNames.infoBlock);
 
-            if (!this.elements.$novelId.length || !this.elements.$infoBlock.length) {
+            if (!(this.elements.$novelId.length || this.elements.$infoBlock.length)) {
                 return;
             }
 
